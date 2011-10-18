@@ -13,6 +13,10 @@ Lawnchair.adapter('indexed-db', (function(){
     return window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
   }; 
   
+  function getTransaction(){
+	return window.IDBTransaction || window.webkitIDBTransaction;
+  };
+  
   
     
   return {
@@ -21,6 +25,7 @@ Lawnchair.adapter('indexed-db', (function(){
     
     init:function(options, callback) {
         this.idb = getIDB();
+        this.ta = getTransaction();
         this.waiting = [];
         var request = this.idb.open(this.name);
         var self = this;
@@ -68,7 +73,7 @@ Lawnchair.adapter('indexed-db', (function(){
          var self = this;
          var win  = function (e) { if (callback) { obj.key = e.target.result; self.lambda(callback).call(self, obj) }};
          
-         var trans = this.db.transaction(["teststore"], webkitIDBTransaction.READ_WRITE, 0);
+         var trans = this.db.transaction(["teststore"], this.ta.READ_WRITE, 0);
          var store = trans.objectStore("teststore");
          var request = obj.key ? store.put(obj, obj.key) : store.put(obj);
          
@@ -191,7 +196,7 @@ Lawnchair.adapter('indexed-db', (function(){
         var self = this;
         var win  = function () { if (callback) self.lambda(callback).call(self) };
         
-        var request = this.db.transaction(["teststore"], webkitIDBTransaction.READ_WRITE).objectStore("teststore").delete(keyOrObj);
+        var request = this.db.transaction(["teststore"], this.ta.READ_WRITE).objectStore("teststore").delete(keyOrObj);
         request.onsuccess = win;
         request.onerror = fail;
         return this;
@@ -210,7 +215,7 @@ Lawnchair.adapter('indexed-db', (function(){
         
         try {
             this.db
-                .transaction(["teststore"], webkitIDBTransaction.READ_WRITE)
+                .transaction(["teststore"], this.ta.READ_WRITE)
                 .objectStore("teststore").clear().onsuccess = win;
             
         } catch(e) {
